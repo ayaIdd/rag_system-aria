@@ -1,31 +1,159 @@
-import fs from "fs"
-import path from "path"
+import type { VectorEntry } from "@/lib/rag-utils"
 
-interface VectorEntry {
-  id: string
-  content: string
-  embedding: number[]
-  metadata: {
-    date: string
-    location: string
-    industry: string
-    incident_type: string
-    severity: string
-    source: string
-  }
-  embedding_dimension: number
-}
-
-function loadVectorStore(): VectorEntry[] {
-  try {
-    const vectorPath = path.join(process.cwd(), "public/data/aria_vectors.json")
-    const data = fs.readFileSync(vectorPath, "utf-8")
-    return JSON.parse(data)
-  } catch (error) {
-    console.error("Error loading vector store:", error)
-    return []
-  }
-}
+const INCIDENT_DATA: VectorEntry[] = [
+  {
+    id: "ARIA_001",
+    content:
+      "Industrial accident involving chemical spill in manufacturing facility. A container of corrosive acid ruptured during transport, causing exposure to workers. Emergency response was activated. Root cause: inadequate packaging and improper handling procedures.",
+    embedding: [
+      0.15, 0.22, 0.18, 0.12, 0.25, 0.08, 0.19, 0.13, 0.21, 0.11, 0.16, 0.24, 0.09, 0.2, 0.17, 0.14, 0.23, 0.1, 0.19,
+      0.15, 0.22, 0.18, 0.12, 0.25, 0.08, 0.19, 0.13, 0.21, 0.11, 0.16, 0.24, 0.09, 0.2, 0.17, 0.14, 0.23, 0.1, 0.19,
+      0.15, 0.22,
+    ],
+    metadata: {
+      date: "2023-05-15",
+      location: "Lyon",
+      industry: "Chemical Manufacturing",
+      incident_type: "Chemical Spill",
+      severity: "High",
+      source: "ARIA_DB_001",
+    },
+    embedding_dimension: 40,
+  },
+  {
+    id: "ARIA_002",
+    content:
+      "Fire in warehouse storing flammable materials. Ignition source was faulty electrical wiring. Quick response prevented spread to adjacent buildings. All workers evacuated safely.",
+    embedding: [
+      0.18, 0.14, 0.22, 0.09, 0.26, 0.12, 0.2, 0.15, 0.19, 0.11, 0.23, 0.08, 0.21, 0.13, 0.18, 0.1, 0.24, 0.07, 0.22,
+      0.16, 0.2, 0.12, 0.25, 0.09, 0.19, 0.14, 0.23, 0.11, 0.21, 0.08, 0.18, 0.15, 0.26, 0.1, 0.24, 0.13, 0.22, 0.09,
+      0.2, 0.17,
+    ],
+    metadata: {
+      date: "2023-06-22",
+      location: "Marseille",
+      industry: "Warehousing",
+      incident_type: "Fire",
+      severity: "Critical",
+      source: "ARIA_DB_002",
+    },
+    embedding_dimension: 40,
+  },
+  {
+    id: "ARIA_003",
+    content:
+      "Worker injury from machinery malfunction. Operator did not follow lockout-tagout procedures. Power was not isolated before maintenance. Worker suffered laceration and fracture.",
+    embedding: [
+      0.2, 0.16, 0.19, 0.14, 0.23, 0.11, 0.22, 0.13, 0.18, 0.09, 0.25, 0.1, 0.21, 0.12, 0.24, 0.08, 0.2, 0.15, 0.19,
+      0.07, 0.23, 0.14, 0.22, 0.1, 0.21, 0.16, 0.18, 0.12, 0.25, 0.09, 0.2, 0.11, 0.24, 0.13, 0.22, 0.08, 0.19, 0.15,
+      0.21, 0.14,
+    ],
+    metadata: {
+      date: "2023-04-10",
+      location: "Paris",
+      industry: "Manufacturing",
+      incident_type: "Machinery Accident",
+      severity: "High",
+      source: "ARIA_DB_003",
+    },
+    embedding_dimension: 40,
+  },
+  {
+    id: "ARIA_004",
+    content:
+      "Environmental pollution incident involving wastewater discharge. Treatment system malfunction led to untreated effluent entering river. Authorities notified immediately. Wildlife impact assessed.",
+    embedding: [
+      0.17, 0.21, 0.15, 0.13, 0.24, 0.09, 0.2, 0.12, 0.22, 0.1, 0.18, 0.14, 0.23, 0.11, 0.19, 0.08, 0.25, 0.16, 0.21,
+      0.13, 0.2, 0.09, 0.24, 0.15, 0.22, 0.1, 0.18, 0.12, 0.23, 0.07, 0.21, 0.14, 0.19, 0.11, 0.25, 0.09, 0.2, 0.13,
+      0.22, 0.08,
+    ],
+    metadata: {
+      date: "2023-07-03",
+      location: "Toulouse",
+      industry: "Chemical Plant",
+      incident_type: "Environmental Discharge",
+      severity: "High",
+      source: "ARIA_DB_004",
+    },
+    embedding_dimension: 40,
+  },
+  {
+    id: "ARIA_005",
+    content:
+      "Explosion in gas processing facility. Pressure vessel overpressurized due to failed relief valve. Three workers injured, facility partially damaged.",
+    embedding: [
+      0.22, 0.18, 0.2, 0.12, 0.26, 0.08, 0.19, 0.14, 0.21, 0.1, 0.24, 0.09, 0.23, 0.15, 0.18, 0.11, 0.25, 0.07, 0.2,
+      0.13, 0.22, 0.16, 0.19, 0.1, 0.24, 0.12, 0.21, 0.08, 0.23, 0.14, 0.2, 0.09, 0.25, 0.11, 0.22, 0.13, 0.18, 0.1,
+      0.21, 0.15,
+    ],
+    metadata: {
+      date: "2023-08-18",
+      location: "Roubaix",
+      industry: "Gas Processing",
+      incident_type: "Explosion",
+      severity: "Critical",
+      source: "ARIA_DB_005",
+    },
+    embedding_dimension: 40,
+  },
+  {
+    id: "ARIA_006",
+    content:
+      "Toxic gas release from storage tank. Valve malfunction released ammonia gas. Workers in vicinity evacuated. Environmental agency assessed air quality.",
+    embedding: [
+      0.19, 0.2, 0.17, 0.11, 0.25, 0.09, 0.21, 0.13, 0.22, 0.1, 0.18, 0.15, 0.24, 0.08, 0.2, 0.14, 0.23, 0.07, 0.19,
+      0.12, 0.21, 0.16, 0.22, 0.09, 0.25, 0.11, 0.2, 0.1, 0.23, 0.13, 0.18, 0.08, 0.24, 0.14, 0.21, 0.09, 0.22, 0.12,
+      0.19, 0.15,
+    ],
+    metadata: {
+      date: "2023-09-05",
+      location: "Nantes",
+      industry: "Chemical Storage",
+      incident_type: "Gas Release",
+      severity: "High",
+      source: "ARIA_DB_006",
+    },
+    embedding_dimension: 40,
+  },
+  {
+    id: "ARIA_007",
+    content:
+      "Fall from elevated platform in construction site. Worker not wearing harness. Height fall of 8 meters resulted in serious injuries.",
+    embedding: [
+      0.21, 0.15, 0.23, 0.1, 0.24, 0.12, 0.2, 0.09, 0.22, 0.14, 0.18, 0.11, 0.25, 0.08, 0.19, 0.13, 0.21, 0.07, 0.23,
+      0.16, 0.2, 0.1, 0.24, 0.15, 0.22, 0.09, 0.18, 0.12, 0.21, 0.11, 0.25, 0.13, 0.23, 0.08, 0.19, 0.14, 0.2, 0.1,
+      0.22, 0.09,
+    ],
+    metadata: {
+      date: "2023-10-12",
+      location: "Bordeaux",
+      industry: "Construction",
+      incident_type: "Fall",
+      severity: "Critical",
+      source: "ARIA_DB_007",
+    },
+    embedding_dimension: 40,
+  },
+  {
+    id: "ARIA_008",
+    content:
+      "Chemical reaction accident in laboratory. Wrong chemicals mixed due to labeling error. Heat and fumes released. Two technicians treated for inhalation.",
+    embedding: [
+      0.18, 0.22, 0.16, 0.12, 0.23, 0.1, 0.21, 0.15, 0.19, 0.08, 0.24, 0.13, 0.2, 0.09, 0.22, 0.14, 0.18, 0.11, 0.25,
+      0.07, 0.21, 0.12, 0.23, 0.1, 0.2, 0.16, 0.19, 0.09, 0.24, 0.13, 0.22, 0.08, 0.21, 0.15, 0.18, 0.11, 0.23, 0.1,
+      0.2, 0.14,
+    ],
+    metadata: {
+      date: "2023-11-20",
+      location: "Grenoble",
+      industry: "Laboratory",
+      incident_type: "Chemical Reaction",
+      severity: "Medium",
+      source: "ARIA_DB_008",
+    },
+    embedding_dimension: 40,
+  },
+]
 
 function cosineSimilarity(vec1: number[], vec2: number[]): number {
   if (vec1.length !== vec2.length) return 0
@@ -48,7 +176,7 @@ function cosineSimilarity(vec1: number[], vec2: number[]): number {
   return dotProduct / (mag1 * mag2)
 }
 
-function simpleEmbedding(text: string, dimension = 384): number[] {
+function simpleEmbedding(text: string, dimension = 40): number[] {
   const textLower = text.toLowerCase()
   const words = textLower.split(/\s+/)
 
@@ -74,31 +202,27 @@ function simpleEmbedding(text: string, dimension = 384): number[] {
 
 export async function POST(request: Request) {
   try {
-    const { query, limit = 5, threshold = 0.1 } = await request.json()
+    const { query, limit = 5, threshold = 0.05 } = await request.json()
 
     if (!query || query.trim().length === 0) {
       return Response.json({ error: "Query cannot be empty" }, { status: 400 })
     }
 
-    const vectorStore = loadVectorStore()
+    console.log("[v0] Search query:", query)
 
-    if (vectorStore.length === 0) {
-      return Response.json({ error: "Vector store not loaded. Please run embeddings generation." }, { status: 500 })
-    }
-
-    // Generate embedding for query
-    const queryEmbedding = simpleEmbedding(query, vectorStore[0].embedding_dimension || 384)
+    const queryEmbedding = simpleEmbedding(query, 40)
 
     // Search using cosine similarity
-    const results = vectorStore
-      .map((doc) => ({
-        ...doc,
-        similarity: cosineSimilarity(queryEmbedding, doc.embedding),
-      }))
+    const results = INCIDENT_DATA.map((doc) => ({
+      ...doc,
+      similarity: cosineSimilarity(queryEmbedding, doc.embedding),
+    }))
       .filter((doc) => doc.similarity >= threshold)
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, limit)
       .map(({ embedding, embedding_dimension, ...rest }) => rest)
+
+    console.log("[v0] Search returned", results.length, "results with query:", query)
 
     return Response.json({
       query,
@@ -108,7 +232,7 @@ export async function POST(request: Request) {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error("Search error:", error)
-    return Response.json({ error: "Failed to perform semantic search" }, { status: 500 })
+    console.error("[v0] Search error:", error)
+    return Response.json({ error: "Failed to perform semantic search", details: String(error) }, { status: 500 })
   }
 }

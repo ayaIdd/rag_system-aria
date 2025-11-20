@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 
-def create_aria_dataset():
-    """Create a realistic ARIA dataset with 100+ incidents for RAG system"""
-    print("[v0] Creating comprehensive ARIA dataset...")
+def setup_aria_data():
+    """Setup ARIA dataset and generate embeddings"""
+    print("[v0] Setting up ARIA dataset...")
     
-    # Real-world French industrial accident data based on ARIA database patterns
+    # Create dataset
     incidents = [
         {
             'id': '2023001',
@@ -237,9 +237,7 @@ def create_aria_dataset():
     
     print(f"[v0] Dataset created with {len(incidents)} incidents")
     print(f"[v0] Saved to {output_path}")
-    
-    return incidents
 
 if __name__ == '__main__':
-    create_aria_dataset()
-    print("[v0] ARIA dataset creation complete!")
+    setup_aria_data()
+    print("[v0] Setup complete!")

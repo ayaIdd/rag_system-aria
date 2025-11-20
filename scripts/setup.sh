@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # ARIA RAG System Setup Script
 # This script sets up the RAG system with sample data
 

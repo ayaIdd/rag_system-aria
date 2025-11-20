@@ -4,22 +4,25 @@ from pathlib import Path
 from typing import List, Dict
 import hashlib
 
-def load_incidents(filepath: str = 'public/data/aria_dataset.csv') -> List[Dict]:
-    """Load incident data from CSV"""
+def load_incidents(filepath: str = 'public/data/aria_dataset.json') -> List[Dict]:
+    """Load incident data from JSON file"""
     print(f"[v0] Loading incidents from {filepath}")
     
     incidents = []
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                # Add a content hash for similarity checking
-                content = f"{row.get('description', '')} {row.get('causes', '')}"
-                row['content_hash'] = hashlib.md5(content.encode()).hexdigest()[:8]
-                incidents.append(row)
+            incidents = json.load(f)
     except FileNotFoundError:
         print(f"[v0] File not found: {filepath}")
         return []
+    except json.JSONDecodeError:
+        print(f"[v0] Error parsing JSON file: {filepath}")
+        return []
+    
+    # Add content hash to each incident
+    for incident in incidents:
+        content = f"{incident.get('description', '')} {incident.get('causes', '')}"
+        incident['content_hash'] = hashlib.md5(content.encode()).hexdigest()[:8]
     
     print(f"[v0] Loaded {len(incidents)} incidents")
     return incidents
@@ -140,4 +143,4 @@ if __name__ == '__main__':
         
         print("[v0] Data processing complete!")
     else:
-        print("[v0] No incidents loaded. Please run fetch_aria_data.py first.")
+        print("[v0] No incidents loaded. Please ensure aria_dataset.json exists.")
