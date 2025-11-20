@@ -1,168 +1,145 @@
+import os
 import json
-import math
+import csv
+import time
+from groq import Groq
 from pathlib import Path
-from typing import List, Dict
+from dotenv import load_dotenv
 
-def simple_embedding(text: str, dimension: int = 384) -> List[float]:
-    """
-    Generate a simple embedding using TF-IDF-like approach
-    For production, use proper embedding models like OpenAI, Sentence Transformers, etc.
-    """
-    text_lower = text.lower()
-    words = text_lower.split()
+# Load environment variables from .env.local
+load_dotenv('.env.local')
+
+def generate_embeddings():
+    # Initialize Groq client
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        print("❌ GROQ_API_KEY not found in environment variables")
+        print("Make sure .env.local exists with your API key")
+        return
     
-    # Initialize embedding vector
-    embedding = [0.0] * dimension
+    print(f"🔑 Using API key: {api_key[:20]}...")
     
-    # Simple hash-based feature extraction
-    for word in words:
-        if len(word) > 2:  # Skip short words
-            # Hash word to dimension index
-            word_hash = sum(ord(c) for c in word)
-            idx = word_hash % dimension
+    client = Groq(api_key=api_key)
+    
+    # Read CSV file - UPDATED to aria_df.csv
+    csv_path = Path("public/data/aria_df.csv")
+    
+    if not csv_path.exists():
+        print(f"❌ CSV file not found at: {csv_path}")
+        print("Please place your aria_df.csv file in public/data/")
+        return
+    
+    print(f"📊 Reading CSV from: {csv_path}")
+    
+    incidents = []
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            incidents.append(row)
+    
+    print(f"Found {len(incidents)} incidents in aria_df.csv")
+    
+    results = []
+    processed = 0
+    skipped = 0
+    
+    for i, row in enumerate(incidents):
+        # Get columns (adjust if your CSV has different column names)
+        titre = row.get('Titre', '').strip()
+        contenu = row.get('Contenu', '').strip()
+        date = row.get('Date', '').strip()
+        
+        if not titre or not contenu:
+            print(f"⚠️  Skipping row {i}: Missing title or content")
+            skipped += 1
+            continue
+        
+        try:
+            # Combine title and content
+            text_to_embed = f"{titre}\n\n{contenu}"
             
-            # TF-like score
-            embedding[idx] += 1.0 / (len(word) * len(words) + 1)
+            print(f"Processing {i+1}/{len(incidents)}: {titre[:60]}...")
+            
+            # Generate embedding with Groq
+            response = client.embeddings.create(
+                model="nomic-embed-text-v1.5",
+                input=text_to_embed
+            )
+            
+            embedding = response.data[0].embedding
+            
+            results.append({
+                "id": f"ARIA_{str(i).zfill(4)}",
+                "content": text_to_embed,
+                "embedding": embedding,
+                "metadata": {
+                    "date": date or "Date inconnue",
+                    "title": titre,
+                    "source": f"ARIA_{str(i).zfill(4)}"
+                },
+                "embedding_dimension": len(embedding)
+            })
+            
+            processed += 1
+            
+            if processed % 25 == 0:
+                print(f"✅ Processed {processed}/{len(incidents)} incidents...")
+            
+            # Small delay to avoid rate limiting
+            time.sleep(0.1)
+            
+        except Exception as e:
+            print(f"❌ Error on row {i}: {str(e)}")
+            if "rate limit" in str(e).lower():
+                print("⏳ Rate limited, waiting 5 seconds...")
+                time.sleep(5)
     
-    # Normalize
-    magnitude = math.sqrt(sum(x**2 for x in embedding))
-    if magnitude > 0:
-        embedding = [x / magnitude for x in embedding]
+    if not results:
+        print("❌ No embeddings generated!")
+        return
     
-    return embedding
+    # Create lib directory if it doesn't exist
+    lib_dir = Path("lib")
+    lib_dir.mkdir(exist_ok=True)
+    
+    # Generate TypeScript file
+    ts_content = f"""// Auto-generated from aria_df.csv
+// Generated on: {time.strftime('%Y-%m-%d %H:%M:%S')}
+// Total incidents: {len(results)}
+// Embedding model: nomic-embed-text-v1.5
+// Embedding dimension: {results[0]['embedding_dimension'] if results else 'N/A'}
 
-def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
-    """Calculate cosine similarity between two vectors"""
-    if len(vec1) != len(vec2):
-        return 0.0
-    
-    dot_product = sum(a * b for a, b in zip(vec1, vec2))
-    mag1 = math.sqrt(sum(a**2 for a in vec1))
-    mag2 = math.sqrt(sum(b**2 for b in vec2))
-    
-    if mag1 == 0 or mag2 == 0:
-        return 0.0
-    
-    return dot_product / (mag1 * mag2)
+export interface VectorEntry {{
+  id: string
+  content: string
+  embedding: number[]
+  metadata: {{
+    date: string
+    title: string
+    source: string
+  }}
+  embedding_dimension: number
+}}
 
-def load_index(filepath: str = 'public/data/aria_index.json') -> List[Dict]:
-    """Load the processed index"""
-    print(f"[v0] Loading index from {filepath}")
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print(f"[v0] Index file not found: {filepath}")
-        return []
-
-def generate_vector_store(index_entries: List[Dict]) -> List[Dict]:
-    """Generate embeddings for all index entries"""
-    print("[v0] Generating embeddings for all documents...")
+export const INCIDENT_DATA: VectorEntry[] = {json.dumps(results, indent=2, ensure_ascii=False)}
+"""
     
-    vector_store = []
-    total = len(index_entries)
-    
-    for i, entry in enumerate(index_entries):
-        if (i + 1) % max(1, total // 10) == 0 or i == 0:
-            print(f"[v0] Processing: {i + 1}/{total}")
-        
-        # Generate embedding for content
-        embedding = simple_embedding(entry['content'])
-        
-        vector_store.append({
-            'id': entry['id'],
-            'content': entry['content'],
-            'embedding': embedding,
-            'metadata': entry['metadata'],
-            'embedding_dimension': len(embedding),
-        })
-    
-    print(f"[v0] Generated {len(vector_store)} embeddings")
-    return vector_store
-
-def save_vector_store(vector_store: List[Dict]):
-    """Save vector store to disk"""
-    print("[v0] Saving vector store...")
-    
-    output_dir = Path('public/data')
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    output_path = output_dir / 'aria_vectors.json'
-    
-    # Create a metadata-only version for quick access (without full embeddings)
-    metadata_only = []
-    for entry in vector_store:
-        metadata_only.append({
-            'id': entry['id'],
-            'metadata': entry['metadata'],
-        })
-    
+    output_path = lib_dir / "incident-data.ts"
     with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(vector_store, f, ensure_ascii=False, indent=1)
+        f.write(ts_content)
     
-    metadata_path = output_dir / 'aria_vectors_metadata.json'
-    with open(metadata_path, 'w', encoding='utf-8') as f:
-        json.dump(metadata_only, f, ensure_ascii=False, indent=2)
+    file_size = output_path.stat().st_size / 1024 / 1024
     
-    print(f"[v0] Vector store saved to {output_path}")
-    print(f"[v0] Vector store size: {len(vector_store)} documents")
+    print("\n" + "="*60)
+    print(f"✅ SUCCESS! Generated embeddings for {len(results)} incidents")
+    print(f"📁 Saved to: {output_path}")
+    print(f"💾 File size: {file_size:.2f} MB")
+    print(f"📊 Skipped: {skipped} rows")
+    print(f"🎯 Embedding dimension: {results[0]['embedding_dimension'] if results else 'N/A'}")
+    print("="*60 + "\n")
+    print("Next steps:")
+    print("1. Start your dev server: npm run dev")
+    print("2. The app will now use your aria_df data!")
 
-def create_search_index(vector_store: List[Dict]) -> Dict:
-    """Create reverse index for fast text search"""
-    print("[v0] Creating search index...")
-    
-    search_index = {
-        'keywords': {},
-        'industries': {},
-        'incident_types': {},
-        'severity_levels': {},
-    }
-    
-    for doc in vector_store:
-        # Index keywords from content
-        words = doc['content'].lower().split()
-        for word in words:
-            if len(word) > 3:  # Only index meaningful words
-                if word not in search_index['keywords']:
-                    search_index['keywords'][word] = []
-                search_index['keywords'][word].append(doc['id'])
-        
-        # Index by metadata
-        industry = doc['metadata'].get('industry', '')
-        if industry:
-            if industry not in search_index['industries']:
-                search_index['industries'][industry] = []
-            search_index['industries'][industry].append(doc['id'])
-        
-        incident_type = doc['metadata'].get('incident_type', '')
-        if incident_type:
-            if incident_type not in search_index['incident_types']:
-                search_index['incident_types'][incident_type] = []
-            search_index['incident_types'][incident_type].append(doc['id'])
-        
-        severity = doc['metadata'].get('severity', '')
-        if severity:
-            if severity not in search_index['severity_levels']:
-                search_index['severity_levels'][severity] = []
-            search_index['severity_levels'][severity].append(doc['id'])
-    
-    print(f"[v0] Indexed {len(search_index['keywords'])} keywords")
-    print(f"[v0] Indexed {len(search_index['industries'])} industries")
-    print(f"[v0] Indexed {len(search_index['incident_types'])} incident types")
-    
-    output_path = Path('public/data/aria_search_index.json')
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(search_index, f, ensure_ascii=False, indent=2)
-    
-    print(f"[v0] Search index saved to {output_path}")
-
-if __name__ == '__main__':
-    index_entries = load_index()
-    
-    if index_entries:
-        vector_store = generate_vector_store(index_entries)
-        save_vector_store(vector_store)
-        create_search_index(vector_store)
-        print("[v0] Embeddings generation complete!")
-    else:
-        print("[v0] No index found. Please run process_incidents.py first.")
+if __name__ == "__main__":
+    generate_embeddings()
