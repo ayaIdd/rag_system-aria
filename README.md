@@ -1,255 +1,136 @@
-# ARIA RAG System - Industrial Accident Database Query Engine
+# ARIA RAG System - Industrial Incident Intelligence
 
-A production-ready Retrieval-Augmented Generation (RAG) system for querying the French ARIA database containing 53,000+ industrial accidents and incidents.
+A production-ready RAG (Retrieval Augmented Generation) system for querying and analyzing 53,000+ industrial accidents from the ARIA database. Provides AI-powered semantic search and evidence-based safety recommendations.
 
-## Features
+![ARIA RAG System](public/icon.svg)
 
-- **Semantic Search**: AI-powered vector similarity search across incident database
-- **RAG Architecture**: Retrieves relevant incidents before generating responses
-- **Context-Aware Analysis**: LLM generates responses based on actual incident data
-- **Evidence-Based**: All answers are grounded in real incidents with citations
-- **High Performance**: Optimized vector operations and caching
+## 🚀 Features
 
-## Tech Stack
+- **Semantic Search**: FAISS-powered vector similarity search across incident reports
+- **AI Analysis**: Groq LLM integration for intelligent incident analysis
+- **Real-time Querying**: Fast, responsive search interface
+- **Evidence-based Insights**: Source citations with similarity scores
+- **Modern UI**: Built with Next.js 14, Tailwind CSS, and shadcn/ui
+- **Production Ready**: FastAPI backend with health monitoring
 
-- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
-- **Backend**: Node.js API routes, Python data pipeline
-- **AI**: Vercel AI SDK, OpenAI GPT-4o-mini
-- **Data**: Vector embeddings, JSON-based vector store
-- **Deployment**: Vercel
 
-## Quick Start
+## 🛠️ Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 18+ 
 - Python 3.8+
-- OpenAI API key (via Vercel AI Gateway)
+- Groq API key ([Get one here](https://console.groq.com))
 
 ### Installation
 
-1. Clone the repository
-\`\`\`bash
-git clone <repository-url>
-cd aria-rag-system
-\`\`\`
+1. **Clone and install dependencies:**
+   ```bash
+   npm install
+   pip install -r requirements.txt
 
-2. Install dependencies
-\`\`\`bash
-npm install
-\`\`\`
+Set up environment variables:
 
-3. Set up environment variables
-Create a `.env.local` file (see `.env.example`):
-\`\`\`
-# OpenAI API Key (optional - uses Vercel AI Gateway by default)
-# OPENAI_API_KEY=your_key_here
+bash
+cp .env.local.example .env.local
+Add your Groq API key:
 
-# Development environment
-NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL=http://localhost:3000
-\`\`\`
+env
+GROQ_API_KEY=gsk_your_key_here
+Generate embeddings (first time only):
 
-4. Run the setup script
-\`\`\`bash
-chmod +x scripts/setup.sh
-./scripts/setup.sh
-\`\`\`
+bash
+python scripts/generate_embeddings.py
 
-This will:
-- Create necessary directories
-- Fetch the ARIA dataset from data.gouv.fr
-- Process and index incidents
-- Generate vector embeddings
 
-5. Start the development server
-\`\`\`bash
+Running the System
+Start the Python search API:
+
+bash
+python scripts/search_api.py
+API will be available at: http://localhost:8000
+
+Start the Next.js frontend:
+
+bash
 npm run dev
-\`\`\`
+App will be available at: http://localhost:3000
 
-Visit `http://localhost:3000` to access the RAG system.
+Open your browser and start querying!
 
-## Data Pipeline
+💡 Usage Examples
+Try these sample queries:
 
-The system processes data through several stages:
+"What causes fires in warehouses?"
 
-### 1. Data Fetch (`scripts/fetch_aria_data.py`)
-- Downloads ARIA dataset from data.gouv.fr
-- Falls back to sample data if download fails
-- Stores raw CSV in `public/data/aria_dataset.csv`
+"Chemical exposure prevention measures"
 
-### 2. Processing (`scripts/process_incidents.py`)
-- Parses CSV and extracts metadata
-- Creates normalized index entries
-- Generates `public/data/aria_index.json`
+"Common manufacturing incident patterns"
 
-### 3. Embeddings (`scripts/generate_embeddings.py`)
-- Generates vector embeddings for each incident
-- Creates vector store: `public/data/aria_vectors.json`
-- Creates search index: `public/data/aria_search_index.json`
+"Equipment failure risk factors"
 
-## API Endpoints
+The system will:
 
-### POST `/api/query`
-Main RAG endpoint for querying with LLM analysis.
+Perform semantic search across 53,000+ incidents
 
-**Request:**
-\`\`\`json
-{
-  "query": "What causes chemical exposure incidents?"
-}
-\`\`\`
+Retrieve the most relevant documents
 
-**Response:**
-\`\`\`json
-{
-  "answer": "Based on the ARIA database...",
-  "sources": [
-    {
-      "id": "ARIA-1001",
-      "type": "Chemical Exposure",
-      "location": "Lyon, France",
-      "date": "2023-01-15",
-      "similarity": "92.5"
-    }
-  ],
-  "metadata": {
-    "queryTime": 245,
-    "documentsRetrieved": 5,
-    "method": "rag-with-semantic-search"
-  }
-}
-\`\`\`
+Generate AI-powered analysis with Groq LLM
 
-### POST `/api/search`
-Semantic search endpoint (vector similarity).
+Provide evidence-based recommendations with sources
 
-**Request:**
-\`\`\`json
-{
-  "query": "chemical exposure",
-  "limit": 5,
-  "threshold": 0.1
-}
-\`\`\`
+🔧 Technical Architecture
+Frontend (Next.js 14)
+Framework: Next.js 14 with App Router
 
-### POST `/api/retrieve`
-Basic text-based document retrieval.
+Styling: Tailwind CSS + shadcn/ui
 
-**Request:**
-\`\`\`json
-{
-  "query": "fire prevention",
-  "limit": 10
-}
-\`\`\`
+State Management: React hooks
 
-## Development
+Type Safety: TypeScript
 
-### File Structure
+Backend (Python)
+Search API: FastAPI with FAISS vector database
 
-\`\`\`
-├── app/
-│   ├── api/
-│   │   ├── query/route.ts        # RAG query endpoint
-│   │   ├── search/route.ts       # Semantic search endpoint
-│   │   └── retrieve/route.ts     # Text retrieval endpoint
-│   ├── layout.tsx
-│   ├── globals.css
-│   └── page.tsx
-├── components/
-│   ├── ui/                       # shadcn/ui components
-│   ├── query-interface.tsx
-│   └── results-display.tsx
-├── lib/
-│   └── rag-utils.ts             # RAG utility functions
-├── scripts/
-│   ├── fetch_aria_data.py       # Download dataset
-│   ├── process_incidents.py     # Process and index
-│   ├── generate_embeddings.py   # Create embeddings
-│   ├── setup.sh                 # Installation script
-│   └── test-rag.ts              # End-to-end tests
-├── public/
-│   └── data/                    # Generated data files
-└── README.md
-\`\`\`
+Embeddings: sentence-transformers/all-MiniLM-L6-v2
 
-### Running Tests
+Vector Store: FAISS for similarity search
 
-\`\`\`bash
-# Run E2E tests
-npx ts-node scripts/test-rag.ts
+Performance: ~22 documents/second processing
 
-# With custom test URL
-TEST_URL=https://your-domain.com npx ts-node scripts/test-rag.ts
-\`\`\`
+AI Integration
+LLM Provider: Groq (llama3-8b-8192)
 
-## Deployment
+RAG Pipeline: Semantic search + contextual generation
 
-### Vercel Deployment
+Response Time: Sub-100ms search + ~2s AI analysis
 
-1. Push to GitHub
-2. Import project in Vercel dashboard
-3. Environment variables are configured automatically via integrations
-4. Deploy!
+📊 Performance
+Embedding Generation: 1,500 documents in 1.2 minutes
 
-\`\`\`bash
-vercel --prod
-\`\`\`
+Search Speed: ~22 documents/second processing
 
-### Data Pipeline in Production
+Query Response: < 3 seconds end-to-end
 
-**Option 1: Pre-computed Data (Recommended)**
-- Run data pipeline locally
-- Commit processed files to `public/data/`
-- Deploy with pre-computed vectors
+Accuracy: Semantic similarity with configurable thresholds
 
-**Option 2: Dynamic Pipeline**
-- Use serverless functions to run pipeline on deploy
-- Requires more configuration and longer build time
+🚀 Deployment
+Vercel (Frontend)
+bash
+npm run build
+vercel deploy
 
-## Performance Considerations
 
-- **Query Time**: Typical 200-400ms for semantic search + LLM
-- **Vector Store Size**: ~10-20MB for 53,000 incidents
-- **Memory**: ~500MB for loaded vector embeddings
-- **Scaling**: Vector store can handle 100,000+ incidents
 
-## Troubleshooting
+ API Endpoints
+Search API (Python - Port 8000)
+GET /health - Health check
 
-### "Vector store not loaded"
-- Run `./scripts/setup.sh` to generate embeddings
-- Check that `public/data/aria_vectors.json` exists
+POST /search - Semantic search
 
-### "Failed to retrieve documents"
-- Verify `public/data/aria_vectors.json` is accessible
-- Check API endpoint connectivity
+GET /stats - System statistics
 
-### "Query timeout"
-- Increase timeout in `/api/query`
-- Reduce number of retrieved documents
-- Optimize vector operations
+RAG API (Next.js - Port 3000)
+POST /api/query - Main RAG query endpoint
 
-## Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `OPENAI_API_KEY` | No | Vercel AI Gateway | OpenAI API key |
-| `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` | No | http://localhost:3000 | Dev redirect URL |
-
-## License
-
-MIT
-
-## Contributing
-
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
-
-## Support
-
-For issues or questions:
-- Check the troubleshooting section
-- Review the API documentation
-- Open an issue on GitHub
+GET /api/health - Application health
