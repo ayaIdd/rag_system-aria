@@ -2,7 +2,6 @@
 
 A production-ready RAG (Retrieval Augmented Generation) system for querying and analyzing 53,000+ industrial accidents from the ARIA database. Provides AI-powered semantic search and evidence-based safety recommendations.
 
-![ARIA RAG System](public/icon.svg)
 
 ## 🚀 Features
 
@@ -25,112 +24,98 @@ A production-ready RAG (Retrieval Augmented Generation) system for querying and 
 ### Installation
 
 1. **Clone and install dependencies:**
-   ```bash
+   \`\`\`bash
    npm install
    pip install -r requirements.txt
+   \`\`\`
 
-Set up environment variables:
+2. **Set up environment variables:**
+   \`\`\`bash
+   cp .env.local.example .env.local
+   \`\`\`
+   Add your Groq API key:
+   \`\`\`env
+   GROQ_API_KEY=gsk_your_key_here
+   \`\`\`
 
-bash
-cp .env.local.example .env.local
-Add your Groq API key:
+3. **Generate embeddings (first time only):**
+   \`\`\`bash
+   python scripts/generate_embeddings.py
+   \`\`\`
 
-env
-GROQ_API_KEY=gsk_your_key_here
-Generate embeddings (first time only):
+## 🚀 Running the System
 
-bash
-python scripts/generate_embeddings.py
-
-
-Running the System
-Start the Python search API:
-
-bash
+**Start the Python search API:**
+\`\`\`bash
 python scripts/search_api.py
+\`\`\`
 API will be available at: http://localhost:8000
 
-Start the Next.js frontend:
-
-bash
+**Start the Next.js frontend:**
+\`\`\`bash
 npm run dev
+\`\`\`
 App will be available at: http://localhost:3000
 
 Open your browser and start querying!
 
-💡 Usage Examples
+## 💡 Usage Examples
+
 Try these sample queries:
 
-"What causes fires in warehouses?"
-
-"Chemical exposure prevention measures"
-
-"Common manufacturing incident patterns"
-
-"Equipment failure risk factors"
+- "What causes fires in warehouses?"
+- "Chemical exposure prevention measures"
+- "Common manufacturing incident patterns"
+- "Equipment failure risk factors"
 
 The system will:
 
-Perform semantic search across 53,000+ incidents
+1. Perform semantic search across 53,000+ incidents
+2. Retrieve the most relevant documents
+3. Generate AI-powered analysis with Groq LLM
+4. Provide evidence-based recommendations with sources
 
-Retrieve the most relevant documents
+## 🔧 Technical Architecture
 
-Generate AI-powered analysis with Groq LLM
+### Frontend (Next.js 14)
+- Framework: Next.js 14 with App Router
+- Styling: Tailwind CSS + shadcn/ui
+- State Management: React hooks
+- Type Safety: TypeScript
 
-Provide evidence-based recommendations with sources
+### Backend (Python)
+- Search API: FastAPI with FAISS vector database
+- Embeddings: sentence-transformers/all-MiniLM-L6-v2
+- Vector Store: FAISS for similarity search
+- Performance: ~22 documents/second processing
 
-🔧 Technical Architecture
-Frontend (Next.js 14)
-Framework: Next.js 14 with App Router
+### AI Integration
+- LLM Provider: Groq (llama3-8b-8192)
+- RAG Pipeline: Semantic search + contextual generation
+- Response Time: Sub-100ms search + ~2s AI analysis
 
-Styling: Tailwind CSS + shadcn/ui
+## 📊 Performance
 
-State Management: React hooks
+- Embedding Generation: 1,500 documents in 1.2 minutes
+- Search Speed: ~22 documents/second processing
+- Query Response: < 3 seconds end-to-end
+- Accuracy: Semantic similarity with configurable thresholds
 
-Type Safety: TypeScript
+## 🚀 Deployment
 
-Backend (Python)
-Search API: FastAPI with FAISS vector database
-
-Embeddings: sentence-transformers/all-MiniLM-L6-v2
-
-Vector Store: FAISS for similarity search
-
-Performance: ~22 documents/second processing
-
-AI Integration
-LLM Provider: Groq (llama3-8b-8192)
-
-RAG Pipeline: Semantic search + contextual generation
-
-Response Time: Sub-100ms search + ~2s AI analysis
-
-📊 Performance
-Embedding Generation: 1,500 documents in 1.2 minutes
-
-Search Speed: ~22 documents/second processing
-
-Query Response: < 3 seconds end-to-end
-
-Accuracy: Semantic similarity with configurable thresholds
-
-🚀 Deployment
-Vercel (Frontend)
-bash
+### Vercel (Frontend)
+\`\`\`bash
 npm run build
 vercel deploy
+\`\`\`
 
+## 📡 API Endpoints
 
+### Search API (Python - Port 8000)
+- `GET /health` - Health check
+- `POST /search` - Semantic search
+- `GET /stats` - System statistics
 
- API Endpoints
-Search API (Python - Port 8000)
-GET /health - Health check
-
-POST /search - Semantic search
-
-GET /stats - System statistics
-
-RAG API (Next.js - Port 3000)
-POST /api/query - Main RAG query endpoint
-
-GET /api/health - Application health
+### RAG API (Next.js - Port 3000)
+- `POST /api/query` - Main RAG query endpoint
+- `GET /api/health` - Application health
